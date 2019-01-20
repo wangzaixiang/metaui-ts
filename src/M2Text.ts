@@ -47,7 +47,7 @@ class M2Text extends LitElement {
 
     // TODO support more features for metas such as number, date, regexp.
     render(){
-        return html`<input placeholder=${this.meta.placeholder} value=${this.model[this.path]} @change=${this.changeListener}></input>`
+        return html`<div>${this.model.label}:<input placeholder=${this.meta.placeholder} value=${this.model[this.path]} @change=${this.changeListener}></input></div>`
     }
 
 } 

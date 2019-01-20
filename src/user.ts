@@ -1,14 +1,11 @@
 import {RecordMeta, FieldMeta, Type} from './meta';
 
 class User {
-
     name: string
     age: number
     birthday: Date
-
     email: string
     address: Address[]
-
 }
 
 class Address {
@@ -66,7 +63,8 @@ var userMeta : RecordMeta  = new RecordMeta ({
             name: 'name',
             type: String,
             label: '姓名',
-            maxLength: 10
+            maxLength: 10,
+            required: true
         },
         {
             name: 'age',

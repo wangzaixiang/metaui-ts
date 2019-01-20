@@ -1,6 +1,25 @@
 <script type="module" src="gen/demo.js"></script>
+<script type="module" src="gen/layout.js"></script>
+
+<style>
+    /* #f-userName {
+        --label-width: 200px;
+    } */
+</style>
 
 <body>
-    Can you look at me?
-    <demo-element id="me"></my-element>
+    Can you look at me? here
+    <demo-element id="me"></demo-element>
+
+    <div id="form">
+      <m2-field id="f-userName" label="userName" flag="*" message="required"></m2-field>
+      <m2-field label="password"></m2-field> 
+      <m2-field label="email"></m2-field>
+    </div>
+    
+    <hr>
+
+    <m2-record></m2-record>
+
+ 
 </body>
