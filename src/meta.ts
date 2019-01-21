@@ -65,7 +65,7 @@ export class FieldMeta {
     length: number
     maxLength: number
     minLength: number
-    regexp: string | RegExp
+    regexp: RegExp
 
     // number
     min: number

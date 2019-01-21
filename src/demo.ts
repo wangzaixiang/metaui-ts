@@ -12,6 +12,8 @@ class DemoElement extends LitElement {
     @property()
     user: User
 
+    sex: string
+
     constructor() {
         super();
         var user = this.user = new User();
@@ -31,7 +33,8 @@ class DemoElement extends LitElement {
     }
 
     render(){
-        return html`<m2-record .owner=${this} path="user"></m2-record>`
+        return html`<m2-record .owner=${this} path="user"></m2-record>
+        `
     }
 
 }

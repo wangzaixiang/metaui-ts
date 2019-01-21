@@ -7,6 +7,7 @@ export class User {
     birthday: Date
     email: string
     address: Address
+    job: string
 
     static metadata: RecordMeta
 }
@@ -101,6 +102,10 @@ User.metadata =  new RecordMeta ({
             regexp: /\w+@\w\.com/,
             label: '电子邮件',
             length: 30
+        },
+        {
+            name: "job",
+            type: String
         },
         {
             name: 'address',
