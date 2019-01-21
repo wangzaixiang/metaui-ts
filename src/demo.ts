@@ -1,22 +1,39 @@
-import './M2Text'
+//import './M2Text'
 
 import { LitElement, html, customElement, property } from 'lit-element';
 import { FieldMeta } from './meta';
 
+import {userMeta, addressMeta, User, Address} from './user';
+import  './layout';
+
 @customElement("demo-element")
 class DemoElement extends LitElement {
 
-    meta = new FieldMeta({
-        name: "age",
-        label: "年龄",
-        type: Number,
-        placeholder: '请输入年龄'
-    })
+    @property()
+    user: User
 
-    age = 10
+    constructor() {
+        super();
+        var user = this.user = new User();
+        user.name = "wangzx";
+        user.age = 40;
+        user.sex = 'M';
+        user.email = "wangzaixiang@gmail.com";
+        user.birthday = new Date(2018, 10, 20);
+        var addr = user.address = new Address();
+        addr.province = "湖北";
+        addr.city = "武汉";
+        addr.area = "硚口";
+        addr.street = "硚口";
+        addr.detail = "中山大道中1号";
+    }
 
     render(){
-        return html`<p>Demo</p> <m2-text .meta=${this.meta} .model=${this} path="age"></m2-text>`
+        return html`<m2-record .metadata=${userMeta} .owner=${this} path="user"></m2-record>`
     }
 
 }
+
+// 1. me.user.age = 10
+// 2. me -> m2-record -> m2-field -> m2-input -> input
+//                       watch owner[path] when it changed

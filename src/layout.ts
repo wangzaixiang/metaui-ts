@@ -1,12 +1,45 @@
-import { LitElement, html, customElement, property } from 'lit-element';
+import { LitElement, html, customElement, property, TemplateResult } from 'lit-element';
 import {StyleInfo, styleMap} from 'lit-html/directives/style-map'
+import {repeat} from 'lit-html/directives/repeat'
+import { RecordMeta, FieldMeta, Type, PropertyChangeListener, enhancePlainObject } from './meta';
+import { MetaWidget } from './m2text';
+import './m2text';
+import { watch } from 'fs';
 
+class DataBindBase extends LitElement {
+
+    listener: PropertyChangeListener = (owner, path, old, value)=> {
+        if(old != value) this.requestUpdate();
+    }
+
+    watch(owner:any, path:string){
+        enhancePlainObject(owner);  // make sure owner watchable
+        var listener = this.listener;
+        if(listener.owner === owner && listener.path == path) return;
+
+        if(listener.owner != null && listener.owner.__removePropertyChangeListener) 
+            listener.owner.__removePropertyChangeListener(listener.path, listener);
+
+        if(owner && owner.__addPropertyChangeListener) {
+            owner.__addPropertyChangeListener(path, listener);
+            listener.owner = owner;
+            listener.path = path;
+        }
+    }
+
+}
 
 @customElement("m2-field")
-class M2Field extends LitElement {
+class M2Field extends DataBindBase {
 
-    @property({reflect: true})
-    label: string
+    @property()
+    metadata: FieldMeta
+
+    @property()
+    owner: any // owner.path
+
+    @property()
+    path: string
 
     @property({reflect: true})
     flag: string
@@ -14,11 +47,46 @@ class M2Field extends LitElement {
     @property({reflect: true})
     message: string
 
-    displayStyle(msg: string) {
+    private displayStyle(msg: string) {
         return (msg && msg.trim().length>0) ? { } : { display: "none" };
     }
 
+    private getModelValue(){
+        return this.owner[this.path];   // TODO
+    }
+
+    private setModelValue(value: String){ // TODO process type convertion
+        this.owner[this.path] = value;
+    }
+
+    private computeWidget(){
+        if(this.metadata.widget != null) return this.metadata.widget;
+        else if(this.metadata == null) return "m2-text";
+        else switch(this.metadata.datatype.type) {
+            case Type.BOOL: return "m2-boolean";
+            case Type.DATE: return "m2-date"
+            default: return "m2-text";
+        }
+
+    }
+
     render(){
+        var label = this.metadata.label;
+
+        this.watch(this.owner, this.path);
+
+        // TODO make sure the widget support MetaWidget interface
+        var widget = this.computeWidget();
+        var main = <MetaWidget><unknown>document.createElement(widget);
+        main.metadata = this.metadata;
+        main.datatype = this.metadata.datatype;
+        main.value = this.getModelValue();
+
+        main.addEventListener("change", e => {
+            var value = <string>main.value;
+            this.setModelValue(value);
+        });
+
         var body = html`
         <style>
           :host { 
@@ -30,7 +98,7 @@ class M2Field extends LitElement {
           }
           #flag, #message { color: red; }
           #label {
-              grid-area: label
+              grid-area: label;
           }
           #main {
               grid-area: main
@@ -40,9 +108,9 @@ class M2Field extends LitElement {
           }
           #label
         </style>   
-        <div id="label">${this.label}:</div>
+        <div id="label">${label}:</div>
         <div id="main">
-            <input length=20 value="wangzx@gmail.com"></input>
+            ${main}
             <span id="flag" style=${styleMap(this.displayStyle(this.flag))}>${this.flag}</span>
         </div>
         <div id="message" style=${styleMap(this.displayStyle(this.message))}>${this.message}</div>
@@ -52,20 +120,53 @@ class M2Field extends LitElement {
 }
 
 @customElement("m2-record")
-class M2Record extends LitElement {
+class M2Record extends DataBindBase {
+
+    @property()
+    metadata: RecordMeta
+
+    @property()
+    owner: any
+
+    @property({reflect: true})
+    path: string
+
+    private getModel() {
+        return this.owner[this.path];
+    }
+
+    private renderField(field: FieldMeta) : TemplateResult {
+        switch(field.datatype.type) {
+            case Type.STRING:
+            case Type.INT:
+            case Type.DECIMAL:
+            case Type.BOOL:
+            case Type.DATE:
+            case Type.DATETIME:
+                return html`<m2-field id="f_${field.name}" .metadata=${field} .owner=${this.getModel()} .path=${field.name}></m2-field>`;
+            case Type.RECORD:
+                return html`<m2-record id="f_${field.name}" .metadata=${field.datatype.record} .owner=${this.getModel()} .path=${field.name}></m2-record>`;
+            default:
+                return html`<div>unknown datatype: ${field.datatype.type} for ${field.name}</div>`
+        }
+        return null
+    }
 
     render(){
+        this.watch(this.owner, this.path);
+
         return html`
         <style>
           :host {
               display: flex;
-              /*flex-direction: column; */
+              flex-wrap: wrap;
           }
         </style>
-            <m2-field label="userName"></m2-field>
-            <m2-field label="password"></m2-field>
-            <m2-field label="email"></m2-field>
-            <m2-field label="age"></m2-field>
+        ${repeat( this.metadata.fields, 
+            (field)=>field.name, 
+            (field)=> this.renderField(field)
+          ) 
+        }
         `;
     }
 }

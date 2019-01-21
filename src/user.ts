@@ -1,14 +1,15 @@
-import {RecordMeta, FieldMeta, Type} from './meta';
+import {RecordMeta, FieldMeta, Type, SelectModel, PropertyChangeListener, PropertyListenable} from './meta';
 
-class User {
+export class User {
     name: string
+    sex: string // M/F
     age: number
     birthday: Date
     email: string
-    address: Address[]
+    address: Address
 }
 
-class Address {
+export class Address {
     province: string
     city: string
     area: string
@@ -17,7 +18,11 @@ class Address {
     default: boolean
 }
 
-var addressMeta: RecordMeta = new RecordMeta({
+var sexModel = new SelectModel({
+    items: [ {key: 'M', label: 'male'}, {key: 'F', label: 'female'} ]
+});
+
+export var addressMeta: RecordMeta = new RecordMeta({
     name: 'address',
     label: '联系地址',
     fields: [
@@ -54,7 +59,7 @@ var addressMeta: RecordMeta = new RecordMeta({
     ]
 })
 
-var userMeta : RecordMeta  = new RecordMeta ({
+export var userMeta : RecordMeta  = new RecordMeta ({
     name: 'user',
     label: '用户',
 
@@ -64,7 +69,15 @@ var userMeta : RecordMeta  = new RecordMeta ({
             type: String,
             label: '姓名',
             maxLength: 10,
-            required: true
+            required: true,
+            placeholder: "请输入姓名"
+        },
+        {
+            name: 'sex',
+            type: String,
+            widget: 'm2-select',
+            label: '性别',
+            selectModel: sexModel
         },
         {
             name: 'age',
@@ -82,18 +95,20 @@ var userMeta : RecordMeta  = new RecordMeta ({
             name: 'email',
             type: String,
             regexp: /\w+@\w\.com/,
-            label: '电子邮件'
+            label: '电子邮件',
+            length: 30
         },
         {
             name: 'address',
             label: '联系地址',
             type: {
-                type: Type.LIST,
-                elementType: addressMeta
+                type: Type.RECORD,
+                record: addressMeta
+                
             }
         }
     ]
-})
+});
 
 /**
  * var user: User 
