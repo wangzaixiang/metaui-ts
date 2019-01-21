@@ -1,4 +1,4 @@
-import {RecordMeta, FieldMeta, Type, SelectModel, PropertyChangeListener, PropertyListenable} from './meta';
+import {RecordMeta, FieldMeta, Type, SelectModel } from './meta';
 
 export class User {
     name: string
@@ -7,6 +7,8 @@ export class User {
     birthday: Date
     email: string
     address: Address
+
+    static metadata: RecordMeta
 }
 
 export class Address {
@@ -16,13 +18,15 @@ export class Address {
     street: string
     detail: string
     default: boolean
+
+    static metadata: RecordMeta
 }
 
 var sexModel = new SelectModel({
     items: [ {key: 'M', label: 'male'}, {key: 'F', label: 'female'} ]
 });
 
-export var addressMeta: RecordMeta = new RecordMeta({
+Address.metadata = new RecordMeta({
     name: 'address',
     label: '联系地址',
     fields: [
@@ -59,7 +63,7 @@ export var addressMeta: RecordMeta = new RecordMeta({
     ]
 })
 
-export var userMeta : RecordMeta  = new RecordMeta ({
+User.metadata =  new RecordMeta ({
     name: 'user',
     label: '用户',
 
@@ -103,8 +107,7 @@ export var userMeta : RecordMeta  = new RecordMeta ({
             label: '联系地址',
             type: {
                 type: Type.RECORD,
-                record: addressMeta
-                
+                record: Address.metadata
             }
         }
     ]

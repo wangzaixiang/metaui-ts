@@ -155,6 +155,13 @@ class M2Record extends DataBindBase {
     render(){
         this.watch(this.owner, this.path);
 
+        var model = this.getModel();
+        if(this.metadata == null && model != null) { // auto discover metadata
+            var proto = Object.getPrototypeOf(model);
+            if(proto != null && proto.constructor && proto.constructor.metadata) 
+                this.metadata = proto.constructor.metadata;
+        }
+
         return html`
         <style>
           :host {

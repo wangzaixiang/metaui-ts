@@ -3,7 +3,7 @@
 import { LitElement, html, customElement, property } from 'lit-element';
 import { FieldMeta } from './meta';
 
-import {userMeta, addressMeta, User, Address} from './user';
+import {User, Address} from './user';
 import  './layout';
 
 @customElement("demo-element")
@@ -15,11 +15,13 @@ class DemoElement extends LitElement {
     constructor() {
         super();
         var user = this.user = new User();
+
         user.name = "wangzx";
         user.age = 40;
         user.sex = 'M';
         user.email = "wangzaixiang@gmail.com";
         user.birthday = new Date(2018, 10, 20);
+        
         var addr = user.address = new Address();
         addr.province = "湖北";
         addr.city = "武汉";
@@ -29,7 +31,7 @@ class DemoElement extends LitElement {
     }
 
     render(){
-        return html`<m2-record .metadata=${userMeta} .owner=${this} path="user"></m2-record>`
+        return html`<m2-record .owner=${this} path="user"></m2-record>`
     }
 
 }
