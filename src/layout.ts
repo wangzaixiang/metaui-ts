@@ -1,10 +1,23 @@
 import { LitElement, html, customElement, property, TemplateResult } from 'lit-element';
 import {StyleInfo, styleMap} from 'lit-html/directives/style-map'
 import {repeat} from 'lit-html/directives/repeat'
-import { RecordMeta, FieldMeta, Type, PropertyChangeListener, enhancePlainObject } from './meta';
+import { RecordMeta, FieldMeta, Type} from './meta';
 import { MetaWidget } from './m2text';
 import './m2text';
 import { watch } from 'fs';
+
+
+export interface PropertyChangeListener {
+    (source: any, path:string, old: any, value: any): void
+    owner?: PropertyListenable
+    path?: string
+}
+
+export interface PropertyListenable {
+    __addPropertyChangeListener: (path:String, listener: PropertyChangeListener)=>void
+    __removePropertyChangeListener: (path: String, listener: PropertyChangeListener)=>void
+}
+
 
 class DataBindBase extends LitElement {
 
@@ -13,7 +26,7 @@ class DataBindBase extends LitElement {
     }
 
     watch(owner:any, path:string){
-        enhancePlainObject(owner);  // make sure owner watchable
+        DataBindBase.enhancePlainObject(owner);  // make sure owner watchable
         var listener = this.listener;
         if(listener.owner === owner && listener.path == path) return;
 
@@ -26,6 +39,107 @@ class DataBindBase extends LitElement {
             listener.path = path;
         }
     }
+
+    /**
+     * { name: "foo", age: 10 } 
+     * will be enhanced to
+     * { __shadow: { 
+     *      name: "foo", 
+     *      age: 10, 
+     *      __listeners: {
+     *          name: [],
+     *          age: []
+     *      }
+     *   },
+     *   __addPropertyChangeListener: function(path, listener) {...}
+     *   __removePropertyChangeListener: function(path, listener) {...}
+     *   get name() {...} 
+     *   set name(value){...}
+     *   get age() { ... }
+     *   set age(value) { ... }
+     * } 
+     * 
+     * the enhanced object still enumerate only "name", "age", so JSON.stringify will be same of origin.
+     */
+    static enhancePlainObject(obj: any) {
+        var shadowDesc = Object.getOwnPropertyDescriptor(obj, "__shadow");
+        if(shadowDesc == null){
+            Object.defineProperty(obj, "__shadow", {
+                configurable: true,
+                enumerable: false,
+                writable: true,
+                value: {
+                    __listeners: {}
+                },
+            });
+            shadowDesc = Object.getOwnPropertyDescriptor(obj, "__shadow");
+            var shadow = shadowDesc.value;
+    
+            Object.defineProperty(obj, "__addPropertyChangeListener", {
+                configurable: true,
+                enumerable: false,
+                writable: false,
+                value: function(path, listener) {
+                    listener.path = path;
+                    listener.owner = obj;
+                    if(shadow.__listeners[path] == null)
+                        shadow.__listeners[path] = [listener];
+                    else
+                        shadow.__listeners[path].push(listener);
+                }
+            });
+            Object.defineProperty(obj, "__removePropertyChangeListener", {
+                configurable: true,
+                enumerable: false,
+                writable: false,
+                value: function(path, listener) {
+                    var array = shadow.__listeners[path];
+                    var index = array.indexOf(listener);
+                    if(index >= 0){
+                        array.splice(index, 1);
+                        listener.owner = null;
+                        listener.path = null;
+                    }
+                    else throw new Error(`listener not found ${path}`)
+                }
+            });
+        }
+    
+        var shadow = obj.__shadow;
+        Object.getOwnPropertyNames(obj).forEach(name => {
+            var pd = Object.getOwnPropertyDescriptor(obj, name);
+    
+            if(pd.value instanceof Function) return;
+            if(pd == shadowDesc || pd.enumerable == false) return;
+    
+            if(pd.get == null && pd.set == null) {
+                var pd2: PropertyDescriptor = {
+                    configurable: false,
+                    enumerable: true,
+                    //writable: false,
+                    get: ()=> shadow[name],
+                    set: (v: any) => {
+                        var old = shadow[name];
+                        shadow[name] = v 
+                        if(old != v){
+                            var listeners = shadow.__listeners[name];
+                            if(listeners != null) for(var idx in listeners) {
+                                var listener = listeners[idx];
+                                listener(obj, name, old, v);
+                            }
+                        }
+                    }
+                }
+                shadowDesc.value[name] = pd.value;
+                delete obj[name];
+    
+                Object.defineProperty(obj, name, pd2);
+            }
+        });
+    };
+    
+    // TODO restorePlainObject
+    
 
 }
 
