@@ -17,6 +17,11 @@ export enum Type {
      RECORD = 22    //
  }
 
+ export class EnumMeta {
+     name: string
+     dictionary: {label: string, value: number} []
+ }
+
 export class DataType {
     type: Type
     maker: Function    // constructor
@@ -118,7 +123,7 @@ export class FieldMeta {
  
 
 export interface FieldMetaConfig {
-    name: string
+    name: string   // in thrift m.name on field
     label?: string
     required?: boolean
     readonly?: boolean
@@ -151,7 +156,7 @@ export interface FieldMetaConfig {
 }
 
 export class RecordMeta {
-    name: string
+    name: string    // in thritft, m.name on struct
     label: string
     fields: FieldMeta[]
 
@@ -167,6 +172,11 @@ export class RecordMeta {
         else if(src instanceof RecordMeta) return src
         else return new RecordMeta(src);
     }
+
+    static buildRecord(constructor: Function, fields: string[]): RecordMeta {
+        return null;
+    }
+
 }
 
 export interface RecordConfig {
@@ -175,6 +185,17 @@ export interface RecordConfig {
 
     fields: FieldMetaConfig[]
     
+}
+
+/**
+ * model an http action
+ */
+export class ActionMeta {
+    name: string
+    label: string
+    url: string
+    request: RecordMeta
+    response: RecordMeta
 }
 
 export class SelectModel {
@@ -208,4 +229,10 @@ export interface SelectModelConfig {
     items: any[] //  maybe
     label?: string | ((any)=>string)
     key?: string | ((any)=>any)    
+}
+
+export function metadata(options: object) {
+    return function(target, key?, descriptor?){
+
+    }
 }

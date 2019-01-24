@@ -72,7 +72,7 @@ User.metadata =  new RecordMeta ({
         {
             name: 'name',
             type: String,
-            label: '姓名',
+            label: '姓名',  // m.label
             maxLength: 10,
             required: true,
             placeholder: "请输入姓名"
@@ -117,6 +117,19 @@ User.metadata =  new RecordMeta ({
         }
     ]
 });
+
+// new ServiceMeta({
+//     name: "TaskAdminService",
+
+//     methods: [
+//         {
+//             name: "deleteTask",
+//             request: SomeRequest.metadata,
+//             response: SomeResponse.metada,
+//             srcKey: "id"
+//         }
+//     ]
+// })
 
 /**
  * var user: User 
